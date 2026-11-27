@@ -836,7 +836,7 @@
   {
    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
    "descricao": "* Valida supabase/migrations e compara cada migration com",
-   "linhas": 1143,
+   "linhas": 1160,
    "env": [
     "DESTINO_URL",
     "LEDGER_RETRY_DELAYS_MS",
@@ -1802,9 +1802,10 @@
   {
    "arquivo": "scripts/db-audit/lote-pendente.mjs",
    "descricao": "* W26: fonte única da regra \"apply pendente\".",
-   "linhas": 82,
+   "linhas": 101,
    "env": [
     "DESTINO_URL",
+    "DRIFT_SCRIPT",
     "GITHUB_STEP_SUMMARY"
    ],
    "npm_scripts": [],

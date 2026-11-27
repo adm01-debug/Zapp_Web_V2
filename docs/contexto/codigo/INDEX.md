@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b7a8641b139b1a0c844685e9d161d84e2dcb9729` (2026-11-27T01:14:52Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b40c422be173c98eaeaf6518e2eb69d3f28f7ca2` (2026-11-26T22:46:05-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 14928 |
 | arquivos_codigo | 5251 |
-| linhas_codigo | 972827 |
+| linhas_codigo | 972911 |
 | rotas | 21 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 56 |
@@ -404,8 +404,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 97056 nós · 163031 arestas · 8919 comunidades · grafo do commit `b7a8641b`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), lucide-react (1282), react (1227), vitest (930), ref_node_fs (773), cn (739), DashboardView.tsx (700), WorkItemSheet.tsx (491), tooltip.tsx (486), framer-motion (480), TalkXCampaignWizard.tsx (439), chat.ts (400)
+- 97055 nós · 163030 arestas · 8939 comunidades · grafo do commit `b40c422b`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5376), TalkXSuppression.tsx (1233), react (895), vitest (857), card.tsx (766), lucide-react (752), ref_node_assert (590), schemas.ts (498), ref_https (498), validation.ts (492), cn (491), DashboardView.tsx (486)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), .from() (supabase/functions/_shared/evolution-types.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -547,6 +547,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-26 `b40c422b` fix(ci): separa falha de infraestrutura do aviso de apply pendente no guard de migrations (#3430)
 - 2026-11-27 `b7a8641b` feat(journey): recupera o hook da timeline do historico (J08) (#3429)
 - 2026-11-27 `f9097fe7` chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)
 - 2026-11-27 `196b1bae` feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)
@@ -561,7 +562,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-26 `31dd9f0f` chore(db): sincronizar artefatos derivados do banco (#3421)
 - 2026-11-26 `d91ac94f` fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)
 - 2026-11-26 `4e81b2b1` feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)
-- 2026-11-26 `96edd3a8` feat(admin): dominios confiaveis do cadastro automatico ganham tela (#3416)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-27 02:19 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_30`
+
 ## 2026-11-27 01:14 UTC
 
 - **functions** alterado (3): `public.archive_talkx_template(p_template_id uuid, p_archived boolean)`, `public.delete_talkx_template(p_template_id uuid)`, `public.duplicate_talkx_template(p_template_id uuid)`

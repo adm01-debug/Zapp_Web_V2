@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b7a8641b139b1a0c844685e9d161d84e2dcb9729",
+  "sha": "b40c422be173c98eaeaf6518e2eb69d3f28f7ca2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-27 01:19 UTC",
+  "generated_at": "2026-11-27 02:19 UTC",
   "files_total": 14775,
   "code_files": 8304,
-  "code_lines": 1251729
+  "code_lines": 1251813
  },
  "version": "1.3.2",
- "facts_hash": "ac8b67911b536c9c",
+ "facts_hash": "623a4f4e8ca558a7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -76591,7 +76591,7 @@
   {
    "module": "scripts",
    "files": 506,
-   "lines": 106823,
+   "lines": 106907,
    "tables": [
     "a",
     "alem_do_limite",
@@ -82751,6 +82751,9 @@
     "src/services/crm/singu-adapter.mock.ts",
     "src/services/crm/singu-adapter.ts"
    ],
+   "DRIFT_SCRIPT": [
+    "scripts/db-audit/lote-pendente.mjs"
+   ],
    "DRY_RUN": [
     "scripts/ci/vercel-env-cleanup.mjs"
    ],
@@ -83012,8 +83015,7 @@
     "scripts/ci/bump-toolchain.mjs",
     "scripts/ci/fila-merge.mjs",
     "scripts/ci/reuso-arvore.mjs",
-    "scripts/db-audit/lote-pendente.mjs",
-    "scripts/db-audit/lote-pendente.test.mjs"
+    "scripts/db-audit/lote-pendente.mjs"
    ],
    "GITHUB_TOKEN": [
     "analise-prs/resgate-regra8-261118/scripts/ci/ga25-ddl-check.mjs",
@@ -83149,6 +83151,9 @@
    ],
    "MIGRATION_EVIDENCE_PATH": [
     "scripts/db-audit/check-migration-drift.mjs"
+   ],
+   "MOCK_ARGV_FILE": [
+    "scripts/db-audit/lote-pendente.test.mjs"
    ],
    "MODE": [
     "src/hooks/contacts/useContactsV2Flags.ts",
@@ -142896,6 +142901,14 @@
    {
     "file": "scripts/db-audit/lote-pendente.test.mjs",
     "name": "W26: sem GITHUB_STEP_SUMMARY nao falha"
+   },
+   {
+    "file": "scripts/db-audit/lote-pendente.test.mjs",
+    "name": "W21: exit 3 escreve summary "
+   },
+   {
+    "file": "scripts/db-audit/lote-pendente.test.mjs",
+    "name": "W26: lote-pendente repassa --classificar ao comparador"
    },
    {
     "file": "scripts/db-audit/lote-pendente.test.mjs",
@@ -302647,7 +302660,7 @@
   },
   "scripts/db-audit/check-migration-drift.mjs": {
    "path": "scripts/db-audit/check-migration-drift.mjs",
-   "lines": 1143,
+   "lines": 1160,
    "env": [
     "DESTINO_URL",
     "LEDGER_RETRY_DELAYS_MS",
@@ -302679,10 +302692,27 @@
     {
      "name": "PINNED_REPLAY_KIND",
      "value": "'ledger-divergence/pinned-replay'"
+    },
+    {
+     "name": "EXIT_OK",
+     "value": "0"
+    },
+    {
+     "name": "EXIT_DRIFT",
+     "value": "1"
+    },
+    {
+     "name": "EXIT_APPLY_PENDENTE",
+     "value": "2"
+    },
+    {
+     "name": "EXIT_FALHA_INFRA",
+     "value": "3"
     }
    ],
    "rule_comments": [
     "* A validacao local sempre roda. A comparacao com o ledger so e pulada quando",
+    "2  somente apply-pendente (estado esperado entre o merge e o apply)",
     "pura, violando a regra 7 da secao 1 do CLAUDE.md. Saía exit 0 com apenas"
    ],
    "doc": "!/usr/bin/env node",
@@ -302692,7 +302722,7 @@
   },
   "scripts/db-audit/check-migration-drift.test.mjs": {
    "path": "scripts/db-audit/check-migration-drift.test.mjs",
-   "lines": 1512,
+   "lines": 1542,
    "is_test": true,
    "env": [
     "FAKE_PSQL_COUNTER_FILE",
@@ -302739,6 +302769,7 @@
     }
    ],
    "rule_comments": [
+    "(permissao/quarentena) para exercitar o exit 3 de infraestrutura.",
     "W21: --classificar nao pode engolir erro de ramo de excecao ----------------"
    ],
    "temporal": [
@@ -303638,31 +303669,36 @@
   },
   "scripts/db-audit/lote-pendente.mjs": {
    "path": "scripts/db-audit/lote-pendente.mjs",
-   "lines": 82,
+   "lines": 101,
    "env": [
     "DESTINO_URL",
+    "DRIFT_SCRIPT",
     "GITHUB_STEP_SUMMARY"
    ],
    "rule_comments": [
     "* W26: fonte única da regra \"apply pendente\".",
     "exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)",
-    "Sem DESTINO_URL não há banco para comparar; validação local sempre passa."
+    "Sem DESTINO_URL não há banco para comparar; validação local sempre passa.",
+    "Falha ao executar o comparador (script ausente, sem permissao, sinal) e",
+    "banco inacessivel nao pode passar como estado esperado."
    ],
    "doc": "!/usr/bin/env node"
   },
   "scripts/db-audit/lote-pendente.test.mjs": {
    "path": "scripts/db-audit/lote-pendente.test.mjs",
-   "lines": 136,
+   "lines": 154,
    "is_test": true,
    "env": [
-    "GITHUB_STEP_SUMMARY"
+    "MOCK_ARGV_FILE"
    ],
-   "doc": "W26: testes unitários de lote-pendente.mjs. Verifica que: 1. Exit 0 do drift-script → exit 0 e summary \"sem drift\" 2. Exit 1 do drift-script → exit 1 e summary \"drift real\" 3. Exit 2 do drift-script → exit 2 e summary \"apply aguardado\" 4. GITHUB_STEP_SUMMARY é escrito quando definido 5. db-live-guar …",
+   "doc": "W26/W21: testes unitários de lote-pendente.mjs. Verifica que: 1. Exit 0 do drift-script → exit 0 e summary \"sem drift\" 2. Exit 1 do drift-script → exit 1 e summary \"drift real\" 3. Exit 2 do drift-script → exit 2 e summary \"apply aguardado\" 4. Exit 3 do drift-script → exit 3 e summary \"falha de infra …",
    "tests": [
     "W26: exit 0 escreve summary ",
     "W26: exit 1 escreve summary ",
     "W26: exit 2 escreve summary ",
     "W26: sem GITHUB_STEP_SUMMARY nao falha",
+    "W21: exit 3 escreve summary ",
+    "W26: lote-pendente repassa --classificar ao comparador",
     "W26: script real exit 0 sem DESTINO_URL (so valida local)",
     "W26: db-live-guard.yml chama lote-pendente.mjs",
     "W26: types-sync.yml chama lote-pendente.mjs"
@@ -432040,10 +432076,22 @@
   }
  },
  "git": {
-  "sha": "b7a8641b139b1a0c844685e9d161d84e2dcb9729",
+  "sha": "b40c422be173c98eaeaf6518e2eb69d3f28f7ca2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b40c422b",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "fix(ci): separa falha de infraestrutura do aviso de apply pendente no guard de migrations (#3430)",
+    "files": [
+     "scripts/db-audit/check-migration-drift.mjs",
+     "scripts/db-audit/check-migration-drift.test.mjs",
+     "scripts/db-audit/lote-pendente.mjs",
+     "scripts/db-audit/lote-pendente.test.mjs"
+    ]
+   },
    {
     "sha": "b7a8641b",
     "date": "2026-11-26",
@@ -432492,37 +432540,12 @@
      "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
      "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql"
     ]
-   },
-   {
-    "sha": "3d99ff1c",
-    "date": "2026-11-26",
-    "author": "adm01-debug",
-    "subject": "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/inbox-contact-authorization.test.sh",
-     "src/components/inbox/chat/MessageActionMenuItems.tsx",
-     "src/components/inbox/chat/MessageHoverToolbar.tsx",
-     "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx",
-     "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
-     "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
-     "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
-     "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
-     "src/hooks/chat/__tests__/useMessagePins.test.tsx",
-     "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
-     "src/hooks/chat/__tests__/useReportMessage.test.tsx",
-     "src/hooks/chat/useMessageFavorites.ts",
-     "src/hooks/chat/useMessagePins.ts",
-     "src/hooks/chat/useRemindMessage.ts",
-     "src/hooks/chat/useReportMessage.ts",
-     "supabase/migrations/20261126221500_remind_me_about_message.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    16
+    15
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -432597,7 +432620,7 @@
     2
    ],
    [
-    "src/hooks/chat/journey/__tests__/useJourneyTimeline.test.tsx",
+    "scripts/db-audit/check-migration-drift.mjs",
     1
    ]
   ]

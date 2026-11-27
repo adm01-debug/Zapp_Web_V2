@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ci): separa falha de infraestrutura do aviso de apply pendente no guard de migrations (#3430)",
    "feat(journey): recupera o hook da timeline do historico (J08) (#3429)",
    "chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)",
    "feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)",
-   "feat(admin): aba Tarefas agendadas passa a ver todos os 30 jobs do banco (#3422)",
-   "fix(talkx): trilha do envio de teste volta a ser legivel (grant select) (#3410)"
+   "feat(admin): aba Tarefas agendadas passa a ver todos os 30 jobs do banco (#3422)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

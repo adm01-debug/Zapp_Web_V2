@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b7a8641b139b1a0c844685e9d161d84e2dcb9729",
+  "commit": "b40c422be173c98eaeaf6518e2eb69d3f28f7ca2",
   "branch": "main",
-  "data_commit": "2026-11-27T01:14:52Z",
+  "data_commit": "2026-11-26T22:46:05-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b40c422b",
+    "data": "2026-11-26",
+    "assunto": "fix(ci): separa falha de infraestrutura do aviso de apply pendente no guard de migrations (#3430)"
+   },
    {
     "sha": "b7a8641b",
     "data": "2026-11-27",
@@ -126,14 +131,9 @@
     "sha": "bcfebb7a",
     "data": "2026-11-26",
     "assunto": "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)"
-   },
-   {
-    "sha": "515fbecb",
-    "data": "2026-11-26",
-    "assunto": "feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)"
    }
   ],
-  "arquivos_mudados_7d": 2889,
+  "arquivos_mudados_7d": 2893,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14928,
   "arquivos_codigo": 5251,
-  "linhas_codigo": 972827,
+  "linhas_codigo": 972911,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
@@ -640,7 +640,7 @@
   },
   "scripts/db-audit": {
    "arquivos": 95,
-   "linhas": 17803
+   "linhas": 17887
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -889,16 +889,16 @@
    "linhas": 1228
   },
   {
+   "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+   "linhas": 1160
+  },
+  {
    "arquivo": "supabase/functions/_shared/ai-generate.ts",
    "linhas": 1159
   },
   {
    "arquivo": "supabase/functions/connection-health-check/index.ts",
    "linhas": 1145
-  },
-  {
-   "arquivo": "scripts/db-audit/check-migration-drift.mjs",
-   "linhas": 1143
   },
   {
    "arquivo": "scripts/ci/ci-local-lib.mjs",

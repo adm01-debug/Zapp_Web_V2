@@ -2345,9 +2345,9 @@
   {
    "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
    "tipo": "unit",
-   "linhas": 1512,
+   "linhas": 1542,
    "testa": [],
-   "casos": 87
+   "casos": 90
   },
   {
    "arquivo": "scripts/db-audit/check-realtime-subscriptions.test.mjs",
@@ -2480,9 +2480,9 @@
   {
    "arquivo": "scripts/db-audit/lote-pendente.test.mjs",
    "tipo": "unit",
-   "linhas": 136,
+   "linhas": 154,
    "testa": [],
-   "casos": 7
+   "casos": 9
   },
   {
    "arquivo": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
