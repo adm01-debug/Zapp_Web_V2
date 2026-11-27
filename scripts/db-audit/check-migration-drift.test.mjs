@@ -169,6 +169,9 @@ function runGuard({
   symlinks = {},
   // scriptArgs: argumentos extras passados ao script (ex.: ['--classificar', '--json'])
   scriptArgs = [],
+  // removerMigrationsDir simula falha de leitura do diretorio de migrations
+  // (permissao/quarentena) para exercitar o exit 3 de infraestrutura.
+  removerMigrationsDir = false,
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
@@ -206,6 +209,7 @@ function runGuard({
     { mode: 0o700 },
   );
   fs.writeFileSync(evidencePath, JSON.stringify({ schema_version: schemaVersion, exceptions: evidence }));
+  if (removerMigrationsDir) fs.rmSync(migrationsDir, { recursive: true, force: true });
 
   const env = {
     ...process.env,
@@ -1184,7 +1188,7 @@ test('queryLedger desiste apos esgotar tentativas de falha transitoria', () => {
     psqlFailMessage: 'timeout expired',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 3);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 1\/3/);
   assert.match(result.stderr, /AVISO: falha transitoria de conexao.*tentativa 2\/3/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: timeout expired/);
@@ -1196,7 +1200,7 @@ test('queryLedger nao tenta novamente para erro nao-transitorio', () => {
     psqlFailMessage: 'ERROR:  syntax error at or near "SELEC"',
     retryDelaysMs: '10,10',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 3);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: ERROR:  syntax error/);
 });
@@ -1210,7 +1214,7 @@ test('LEDGER_RETRY_DELAYS_MS vazio desliga o retry do ledger', () => {
     psqlFailMessage: 'connection to server ... port 5432 failed: timeout expired',
     retryDelaysMs: '',
   });
-  assert.equal(result.status, 2);
+  assert.equal(result.status, 3);
   assert.doesNotMatch(result.stderr, /AVISO: falha transitoria/);
   assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations via psql: connection to server/);
 });
@@ -1508,4 +1512,30 @@ test('W21 (classificar): apply-pendente sozinho -> exit 2 (neutro, sem drift)', 
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.totais['apply-pendente'], 1);
   assert.deepEqual(parsed.erros, []);
+});
+
+// Exit 3 e reservado para falha de infraestrutura: 2 significa "apply aguardado",
+// que db-live-guard trata como neutro em push e types-sync usa para pular gates.
+// Se falha de leitura/consulta tambem saisse 2, banco inacessivel passaria como
+// estado esperado e o CI ficaria verde sem verificar nada.
+test('W21 (classificar): migrations ilegiveis -> exit 3 (infra), nunca 2', () => {
+  const result = runGuard({ removerMigrationsDir: true, scriptArgs: ['--classificar'] });
+  assert.equal(result.status, 3, `esperado 3 (infra); stderr=${result.stderr}`);
+  assert.match(result.stderr, /FALHA: nao foi possivel ler migrations\/evidencias/);
+  assert.doesNotMatch(result.stdout, /apply-pendente/);
+});
+
+test('W21 (classificar): ledger inacessivel apos retry -> exit 3 (infra), nunca 2', () => {
+  const result = runGuard({
+    psqlFailCount: 99,
+    retryDelaysMs: '',
+    scriptArgs: ['--classificar'],
+  });
+  assert.equal(result.status, 3, `esperado 3 (infra); stderr=${result.stderr}`);
+  assert.match(result.stderr, /FALHA:/);
+});
+
+test('W21 (sem classificar): ledger inacessivel tambem sai 3, nao 2', () => {
+  const result = runGuard({ psqlFailCount: 99, retryDelaysMs: '' });
+  assert.equal(result.status, 3, `esperado 3 (infra); stderr=${result.stderr}`);
 });

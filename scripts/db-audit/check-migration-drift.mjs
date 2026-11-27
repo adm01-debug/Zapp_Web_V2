@@ -17,6 +17,15 @@
  *                   desliga este retry -- use quando o transporte ja repete
  *                   (PSQL_CONNECT_RETRIES em psql-environment.mjs), senao as
  *                   duas camadas se multiplicam.
+ *
+ * Contrato de exit code (consumido por lote-pendente.mjs, db-live-guard.yml,
+ * types-sync.yml e db-guard.yml):
+ *   0  sem drift
+ *   1  drift real ou entrada local invalida
+ *   2  somente apply-pendente (estado esperado entre o merge e o apply)
+ *   3  falha de infraestrutura ao ler migrations/evidencias ou ao consultar o
+ *      ledger. Nunca se confunde com 2: "apply aguardado" e neutro e o CI trata
+ *      como sucesso em push, enquanto 3 precisa ficar visivel como falha.
  */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -38,6 +47,12 @@ const NAME_ONLY_KIND = 'ledger-only/name-and-file-pinned';
 const REGISTERED_TOMBSTONE_KIND = 'ledger-archive/registered-tombstone';
 const PINNED_MARKER_KIND = 'ledger-divergence/pinned-sql-marker';
 const PINNED_REPLAY_KIND = 'ledger-divergence/pinned-replay';
+
+// Exit codes nomeados: o contrato esta documentado no cabecalho deste arquivo.
+const EXIT_OK = 0;
+const EXIT_DRIFT = 1;
+const EXIT_APPLY_PENDENTE = 2;
+const EXIT_FALHA_INFRA = 3;
 const PINNED_REPLAY_REASONS = new Set([
   'endpoint-literal-update',
   'ledger-summary',
@@ -1014,7 +1029,7 @@ function main() {
     local = loadMigrations(DIR, evidence);
   } catch (error) {
     console.error(`FALHA: nao foi possivel ler migrations/evidencias: ${error.message}`);
-    return 2;
+    return EXIT_FALHA_INFRA;
   }
 
   // E53: buffer status lines so divergence summary is first on stdout on drift path
@@ -1027,7 +1042,7 @@ function main() {
     flushStatus();
     console.error('\nFALHA: migrations locais invalidas:');
     printErrors([...evidence.errors, ...local.errors].map((error) => `  ${error}`));
-    return 1;
+    return EXIT_DRIFT;
   }
 
   if (!url) {
@@ -1043,10 +1058,10 @@ function main() {
         },
         erros: [],
       }, null, 2));
-      return 0;
+      return EXIT_OK;
     }
     console.log('DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.');
-    return 0;
+    return EXIT_OK;
   }
 
   let parsed;
@@ -1054,7 +1069,7 @@ function main() {
     parsed = parseLedger(queryLedger());
   } catch (error) {
     console.error(`FALHA: ${error.message}`);
-    return 2;
+    return EXIT_FALHA_INFRA;
   }
 
   pendingStatus.push(`registros em schema_migrations: ${parsed.records.length}`);
@@ -1066,7 +1081,7 @@ function main() {
     flushStatus();
     console.error('\nFALHA: ledger invalido:');
     printErrors(parsedErrorsFiltrados.map((error) => `  ${error}`));
-    return 1;
+    return EXIT_DRIFT;
   }
 
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion, {
@@ -1104,10 +1119,12 @@ function main() {
           printDriftErrors(result.driftErrors);
         }
       }
-      return 1;
+      return EXIT_DRIFT;
     }
     // exit 2 para apply-pendente (neutro) — lote-pendente.mjs usa este codigo
-    return result.classifications.some((item) => item.classe === 'apply-pendente') ? 2 : 0;
+    return result.classifications.some((item) => item.classe === 'apply-pendente')
+      ? EXIT_APPLY_PENDENTE
+      : EXIT_OK;
   }
 
   if (result.errors.length) {
@@ -1119,7 +1136,7 @@ function main() {
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
-    return 1;
+    return EXIT_DRIFT;
   }
 
   flushStatus();
@@ -1136,7 +1153,7 @@ function main() {
     + `${result.verifiedEvidence} conteudo(s)/hash(es) historico(s) verificado(s); `
     + `${result.pinnedWithoutHistoricalContent} arquivo(s) legado(s) fixado(s) sem prova de conteudo historico.`,
   );
-  return 0;
+  return EXIT_OK;
 }
 
 process.exitCode = main();
