@@ -36,6 +36,11 @@ const dados = vi.hoisted(() => ({ templates: [] as Array<Record<string, unknown>
 vi.mock('@/hooks/system/useDownloadPermission', () => ({
   useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
 }));
+// Mesma razao do mock acima: sem AuthProvider no render o `useUserRole`
+// (useAuth) lanca. O papel nao participa do que este teste mede.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: false, isSupervisor: false }),
+}));
 
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   useTalkXTemplates: () => ({

@@ -117,7 +117,7 @@ partir do código e falha quando:
 | `talkx-link` | A | `src/hooks/integrations/useTalkXLinks.ts:56` · `supabase/functions/talkx-send/index.ts:128` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
-| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:519` · `src/hooks/integrations/useTalkX.ts:535` · `src/hooks/integrations/useTalkX.ts:544` · `src/hooks/integrations/useTalkX.ts:553` · `src/hooks/integrations/useTalkXTemplates.ts:211` · `supabase/functions/talkx-scheduler/index.ts:346` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
+| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:519` · `src/hooks/integrations/useTalkX.ts:535` · `src/hooks/integrations/useTalkX.ts:544` · `src/hooks/integrations/useTalkX.ts:553` · `src/hooks/integrations/useTalkXTemplates.ts:246` · `supabase/functions/talkx-scheduler/index.ts:346` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
 | `talkx-storage-purge` | E | — sem chamador no repositório — |
 | `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
 | `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:246` |

@@ -3,13 +3,15 @@ import { toast } from 'sonner';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
-  Sparkles, TrendingUp, Lightbulb, Download, Upload,
+  Sparkles, TrendingUp, Lightbulb, Download, Upload, Send, Archive, ArchiveRestore,
 } from 'lucide-react';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
 import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { TalkXTemplateImportDialog } from './TalkXTemplateImportDialog';
+import { TalkXTemplateTestDialog } from './TalkXTemplateTestDialog';
+import { useUserRole } from '@/hooks/system/useUserRole';
 import {
   serializeTemplatesToCsv, serializeTemplatesToJson, downloadTemplateFile,
   serializarTags, desserializarTags, nomeDeCopia,
@@ -83,7 +85,11 @@ function resumoVariaveis(content: string): string | null {
 }
 
 export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onOpenMonitor }: Props) {
-  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, conversion: conversionFromHook } = useTalkXTemplates();
+  const { templates, isLoading, isError, error, refetch, createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, archiveTemplate, conversion: conversionFromHook } = useTalkXTemplates();
+  // O teste de envio é do `talkx-send` (`action=test`), que só aceita admin/supervisor.
+  const { isAdmin, isSupervisor } = useUserRole();
+  const canTest = isAdmin || isSupervisor;
+  const [testTarget, setTestTarget] = useState<TalkXTemplate | null>(null);
   // X091 — os 4 KPIs da tela 04 saem da RPC de métricas da biblioteca (X086),
   // não de contagem no navegador: total, aprovações do período (com variação),
   // mais usado por mensagens enviadas e taxa média de resposta. Sem resposta da
@@ -98,7 +104,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   const avgReplyComparison = avgReplyDelta == null
     ? undefined
     : { previous: libStats?.avg_reply_rate_previous_pct ?? null, kind: 'points' as const };
-  const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all' });
+  const { values: filterValues, setValue: setFilterValue, query: search, setQuery: setSearch, hasActive, clear: clearFilters } = useTalkXFilterState('talkx.templates.filters', { cat: 'all', st: 'all', arq: 'all' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
   const [mode, setMode] = useState<ViewMode>('list');
@@ -266,13 +272,17 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
 
   const filtered = useMemo(() => {
     let r = templates;
+    // N-127: template arquivado sai da lista ATIVA (default). O arquivamento não
+    // apaga nada — "Arquivados" e "Ativos + arquivados" continuam alcançáveis.
+    if (filterValues.arq !== 'both') r = r.filter((t) => (filterValues.arq === 'archived' ? !!t.archived_at : !t.archived_at));
     if (filterValues.cat !== 'all') r = r.filter((t) => t.category === filterValues.cat);
     if (filterValues.st !== 'all') r = r.filter((t) => t.status === filterValues.st);
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((t) => t.name.toLowerCase().includes(q) || t.content.toLowerCase().includes(q) || t.tags.some((x) => x.includes(q))); }
     return r;
-  }, [templates, filterValues.cat, filterValues.st, search]);
+  }, [templates, filterValues.cat, filterValues.st, filterValues.arq, search]);
 
   const filterDefs = useMemo(() => [
+    { key: 'arq', label: 'Ativos', allLabel: 'Ativos', options: [{ value: 'archived', label: 'Arquivados' }, { value: 'both', label: 'Ativos + arquivados' }] },
     { key: 'cat', label: 'Todas as categorias', allLabel: 'Todas as categorias', options: TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: c })) },
     { key: 'st', label: 'Todos os status', allLabel: 'Todos os status', options: Object.entries(TEMPLATE_STATUS).map(([v, m]) => ({ value: v, label: m.label })) },
   ], []);
@@ -388,7 +398,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
 
         <FilterBarV2
           search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar templates…"
-          filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'cat' | 'st', v); setPage(1); }}
+          filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'cat' | 'st' | 'arq', v); setPage(1); }}
           hasActive={hasActive} onClear={limparFiltros}
           view={galleryMode} onView={trocarModo}
           rightSlot={
@@ -425,14 +435,14 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           <div data-talkx-view="grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {paged.length === 0 ? (<div className="col-span-full"><TalkXFilteredEmptyState onClearFilters={limparFiltros} /></div>)
              : paged.map((t) => (
-              <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
+              <TemplateCard key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} onArchive={() => archiveTemplate.mutate({ id: t.id, archived: !t.archived_at })} onTest={canTest ? () => setTestTarget(t) : undefined} />
             ))}
           </div>
         ) : (
           <div data-talkx-view="list" className="border border-border/70 rounded-2xl overflow-hidden divide-y divide-border/50">
             {paged.length === 0 ? <TalkXFilteredEmptyState onClearFilters={limparFiltros} />
              : paged.map((t) => (
-              <TemplateListItem key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} />
+              <TemplateListItem key={t.id} t={t} selected={selected?.id === t.id} onClick={() => setSelected(t === selected ? null : t)} onEdit={() => openEdit(t)} onDuplicate={() => duplicateTemplate.mutate(t)} onDelete={() => setDeleting(t)} onUse={() => onUseTemplate(t.id)} onArchive={() => archiveTemplate.mutate({ id: t.id, archived: !t.archived_at })} onTest={canTest ? () => setTestTarget(t) : undefined} />
             ))}
           </div>
         )}
@@ -540,6 +550,10 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
         loading={deleteTemplate.isPending}
       />
 
+      {testTarget && (
+        <TalkXTemplateTestDialog template={testTarget} open onClose={() => setTestTarget(null)} />
+      )}
+
       {showImport && (
         <TalkXTemplateImportDialog
           existingTemplates={templates}
@@ -557,7 +571,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
  * ficha do template embaixo (nome, categoria, tags, variáveis usadas, data,
  * usos e status). "Usar template" só habilita o que está aprovado (A8).
  */
-function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
+function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse, onArchive, onTest }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void; onArchive: () => void; onTest?: () => void }) {
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
   const variaveis = resumoVariaveis(t.content);
   const tagsVisiveis = t.tags.slice(0, 2);
@@ -617,6 +631,8 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
           <button type="button" disabled={!aprovado} title={motivoBloqueio} onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Usar template</button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3.5 h-3.5" /></button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3.5 h-3.5" /></button>
+          {onTest && <button type="button" onClick={(e) => { e.stopPropagation(); onTest(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Testar"><Send className="w-3.5 h-3.5" /></button>}
+          <button type="button" onClick={(e) => { e.stopPropagation(); onArchive(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label={t.archived_at ? 'Desarquivar' : 'Arquivar'} title={t.archived_at ? 'Voltar para a lista ativa' : 'Tirar da lista ativa sem apagar'}>{t.archived_at ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}</button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
           <span className="text-3xs text-muted-foreground" title={`${fmtInt(t.use_count)} campanhas lançadas com este template`}>{fmtInt(t.use_count)} usos</span>
         </div>
@@ -629,7 +645,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
  * X089 — linha do modo lista: ícone, nome, descrição, selo e tags. Mesma fonte
  * de dados do cartão, para a tela não contar duas histórias diferentes.
  */
-export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
+export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse, onArchive, onTest }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void; onArchive: () => void; onTest?: () => void }) {
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
   const aprovado = t.status === 'approved';
   const descricao = t.description?.trim() ? t.description : `${t.content.slice(0, 80)}${t.content.length > 80 ? '…' : ''}`;
@@ -668,6 +684,8 @@ export function TemplateListItem({ t, selected, onClick, onEdit, onDuplicate, on
         <button type="button" disabled={!aprovado} title={aprovado ? undefined : 'Só templates aprovados podem ser usados em campanhas'} onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-7 px-2.5 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed">Usar</button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
+        {onTest && <button type="button" onClick={(e) => { e.stopPropagation(); onTest(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Testar"><Send className="w-3 h-3" /></button>}
+        <button type="button" onClick={(e) => { e.stopPropagation(); onArchive(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label={t.archived_at ? 'Desarquivar' : 'Arquivar'} title={t.archived_at ? 'Voltar para a lista ativa' : 'Tirar da lista ativa sem apagar'}>{t.archived_at ? <ArchiveRestore className="w-3 h-3" /> : <Archive className="w-3 h-3" />}</button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
       </div>
     </div>
