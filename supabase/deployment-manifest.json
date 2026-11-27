@@ -761,8 +761,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 41979,
-      "sha256": "fd1a3a521d63a1f025c638335b861d72821365907c2752f9dded095632d19248"
+      "bytes": 34462,
+      "sha256": "363e6b8c24182c88c864c7a906ee56c360a87aba287781976034435370b59031"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -2325,7 +2325,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e4db5c7ec1506aba5f38ce90775bd3cb1944891c233af01329426698613883ae",
+      "source_sha256": "b49bb8e5de03590d97bd5b932fe0120c84c19f5c60da7a33372f59908e6764db",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2337,8 +2337,6 @@
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
-        "supabase/functions/_shared/instance_pause.ts",
-        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/errors.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
@@ -2940,5 +2938,5 @@
       ]
     }
   ],
-  "manifest_sha256": "eef5965eae584ec6cb91655f405bb07a102fee5acba7e4b8cc6ab9c1f1df5019"
+  "manifest_sha256": "abaf881d2bdbcf0f8812ff100a37f74ddf2ff72b9569cbb08dcefc73734e0dc1"
 }
