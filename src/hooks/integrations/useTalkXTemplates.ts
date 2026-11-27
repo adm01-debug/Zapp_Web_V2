@@ -29,6 +29,8 @@ export interface TalkXTemplate {
    * não tem versão corrente (ex.: criado antes do backfill e nunca editado).
    */
   current_version_id?: string | null;
+  /** Arquivamento (N-127): sai da lista ativa sem apagar histórico/variantes. */
+  archived_at?: string | null;
   creator?: { name: string | null } | null;
 }
 
@@ -42,6 +44,19 @@ type SnapshotArgs = Omit<GeneratedSnapshotArgs, 'p_description' | 'p_media_url' 
 };
 
 /** Texto do erro sem assumir a forma (Error, PostgrestError ou desconhecido). */
+/**
+ * RPC do Talk X que responde `{ ok, error? }` em jsonb (N-127): o erro de negócio
+ * vem DENTRO do jsonb, não como `error` do PostgREST. Sem desembrulhar, a tela
+ * diria "duplicado" mesmo quando o banco recusou.
+ */
+function unwrapTalkXRpc(data: unknown): Record<string, unknown> {
+  const payload = (data ?? {}) as Record<string, unknown>;
+  if (payload.ok !== true) {
+    throw new Error(typeof payload.error === 'string' ? payload.error : 'talkx_rpc_failed');
+  }
+  return payload;
+}
+
 function errorText(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'object' && error !== null && 'message' in error) {
@@ -166,23 +181,43 @@ export function useTalkXTemplates() {
 
   const deleteTemplate = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await fromTable('talkx_templates').delete().eq('id', id);
+      // N-127: a exclusão passa pela RPC (trava FOR UPDATE + guarda de campanha). O
+      // DELETE direto na tabela batia no trigger `talkx_template_in_use` sem tradução.
+      const { data, error } = await supabase.rpc('delete_talkx_template', { p_template_id: id });
       if (error) throw error;
+      unwrapTalkXRpc(data);
     },
     onSuccess: () => { invalidate(); toast.success('Template excluído'); },
     onError: (e: Error) => toast.error(templateDeleteErrorMessage(e)),
   });
 
+  const archiveTemplate = useMutation({
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
+      const { data, error } = await supabase.rpc('archive_talkx_template', { p_template_id: id, p_archived: archived });
+      if (error) throw error;
+      unwrapTalkXRpc(data);
+    },
+    onSuccess: (_payload, { archived }) => {
+      invalidate();
+      toast.success(archived ? 'Template arquivado' : 'Template desarquivado');
+    },
+    onError: (e: Error) => toast.error(`Erro ao arquivar: ${errorText(e)}`),
+  });
+
   const duplicateTemplate = useMutation({
     mutationFn: async (t: TalkXTemplate) => {
-      const { error } = await fromTable('talkx_templates').insert({
-        name: `${t.name} (cópia)`, description: t.description, category: t.category, content: t.content,
-        media_url: t.media_url, media_type: t.media_type, tags: t.tags, status: 'draft', created_by: profile?.id ?? null, custom_variables: t.custom_variables ?? [],
-      });
+      // N-127: a RPC copia content/variáveis E as variantes A/B na mesma transação.
+      // O INSERT daqui copiava só a linha e deixava as variantes para trás.
+      const { data, error } = await supabase.rpc('duplicate_talkx_template', { p_template_id: t.id });
       if (error) throw error;
+      const payload = unwrapTalkXRpc(data);
+      const copyId = typeof payload.template_id === 'string' ? payload.template_id : null;
+      if (!copyId) return null;
+      const { data: row } = await fromTable('talkx_templates').select('*, creator:created_by(name)').eq('id', copyId).maybeSingle();
+      return (row as TalkXTemplate | null) ?? null;
     },
     onSuccess: () => { invalidate(); toast.success('Template duplicado'); },
-    onError: (e: Error) => toast.error(`Erro ao duplicar: ${e.message}`),
+    onError: (e: Error) => toast.error(`Erro ao duplicar: ${errorText(e)}`),
   });
 
   /** Incrementa o contador de uso quando um template vira campanha (best-effort). */
@@ -201,8 +236,8 @@ export function useTalkXTemplates() {
     return data ?? [];
   };
 
-  const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone, customVariables }: {
-    templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string; customVariables?: string[];
+  const testTemplate = async ({ templateContent, mediaUrl, mediaType, phone, connectionId, customVariables }: {
+    templateContent: string; mediaUrl?: string | null; mediaType?: string | null; phone: string; connectionId: string; customVariables?: string[];
   }) => {
     const { data: { session } } = await supabase.auth.getSession();
     // SEC-FE-01: a URL vem de @/config/supabase (a mesma fonte do client.ts). NÃO usar
@@ -211,7 +246,7 @@ export function useTalkXTemplates() {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/talkx-send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone, customVariables }),
+      body: JSON.stringify({ action: 'test', templateContent, mediaUrl, mediaType, phone, connectionId, customVariables }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.success) throw new Error(json.error || `Erro ${res.status}`);
@@ -261,7 +296,7 @@ export function useTalkXTemplates() {
     isError: query.isError,
     error: query.error as Error | null,
     refetch: query.refetch,
-    createTemplate, updateTemplate, deleteTemplate, duplicateTemplate,
+    createTemplate, updateTemplate, deleteTemplate, duplicateTemplate, archiveTemplate,
     testTemplate,
     conversion,
     fetchVersionHistory,

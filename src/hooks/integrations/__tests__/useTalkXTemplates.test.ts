@@ -362,8 +362,10 @@ describe('useTalkXTemplates — updateTemplate (snapshot)', () => {
 });
 
 describe('useTalkXTemplates — deleteTemplate', () => {
-  it('exclui pelo id e avisa o sucesso', async () => {
-    mutationResult = { data: null, error: null };
+  // N-127: a exclusão passa pela RPC `delete_talkx_template` (trava FOR UPDATE +
+  // guarda de campanha). O DELETE direto na tabela batia no trigger sem tradução.
+  it('exclui pela RPC, com o id, e avisa o sucesso', async () => {
+    supabaseRpc.mockResolvedValue({ data: { ok: true }, error: null });
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -371,13 +373,12 @@ describe('useTalkXTemplates — deleteTemplate', () => {
       await result.current.deleteTemplate.mutateAsync('tpl-1');
     });
 
-    const b = tableBuilder(1);
-    expect(calls(b.eq)[0]).toEqual(['id', 'tpl-1']);
+    expect(calls(supabaseRpc)[0]).toEqual(['delete_talkx_template', { p_template_id: 'tpl-1' }]);
     expect(toastSuccess).toHaveBeenCalledWith('Template excluído');
   });
 
   it('avisa o erro do banco ao excluir', async () => {
-    mutationResult = { data: null, error: { message: 'permission denied' } };
+    supabaseRpc.mockResolvedValue({ data: null, error: { message: 'permission denied' } });
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -389,7 +390,9 @@ describe('useTalkXTemplates — deleteTemplate', () => {
   });
 
   it('traduz a trava de exclusao de template em campanha (N-127)', async () => {
-    mutationResult = { data: null, error: { message: 'talkx_template_in_use' } };
+    // A RPC devolve o motivo DENTRO do jsonb (`{ok:false,error}`) — o PostgREST
+    // não marca erro, então sem tradução a tela diria que excluiu.
+    supabaseRpc.mockResolvedValue({ data: { ok: false, error: 'talkx_template_in_use' }, error: null });
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -398,36 +401,72 @@ describe('useTalkXTemplates — deleteTemplate', () => {
     });
 
     expect(toastError).toHaveBeenCalledWith('Este template está em uso por uma campanha. Desvincule ou exclua a campanha antes de apagar o template.');
+    expect(toastSuccess).not.toHaveBeenCalled();
   });
 });
 
-describe('useTalkXTemplates — duplicateTemplate', () => {
-  it('duplica como rascunho com o sufixo (copia), preservando o conteudo', async () => {
-    mutationResult = { data: null, error: null };
+describe('useTalkXTemplates — archiveTemplate', () => {
+  it('arquiva pela RPC e avisa o sucesso', async () => {
+    supabaseRpc.mockResolvedValue({ data: { ok: true, archived: true }, error: null });
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     await act(async () => {
-      await result.current.duplicateTemplate.mutateAsync(TEMPLATE);
+      await result.current.archiveTemplate.mutateAsync({ id: 'tpl-1', archived: true });
     });
 
-    expect(calls(tableBuilder(1).insert)[0][0]).toEqual({
-      name: 'Boas-vindas (cópia)',
-      description: 'd',
-      category: 'geral',
-      content: 'Ola {{nome}}',
-      media_url: null,
-      media_type: null,
-      tags: ['a'],
-      status: 'draft',
-      created_by: 'profile-1',
-      custom_variables: ['nome'],
+    expect(calls(supabaseRpc)[0]).toEqual(['archive_talkx_template', { p_template_id: 'tpl-1', p_archived: true }]);
+    expect(toastSuccess).toHaveBeenCalledWith('Template arquivado');
+  });
+
+  it('desarquiva pela RPC com p_archived falso', async () => {
+    supabaseRpc.mockResolvedValue({ data: { ok: true, archived: false }, error: null });
+    const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.archiveTemplate.mutateAsync({ id: 'tpl-1', archived: false });
     });
+
+    expect(calls(supabaseRpc)[0]).toEqual(['archive_talkx_template', { p_template_id: 'tpl-1', p_archived: false }]);
+    expect(toastSuccess).toHaveBeenCalledWith('Template desarquivado');
+  });
+
+  it('nao mente sucesso quando a RPC recusa dentro do jsonb', async () => {
+    supabaseRpc.mockResolvedValue({ data: { ok: false, error: 'not_owner' }, error: null });
+    const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.archiveTemplate.mutateAsync({ id: 'tpl-1', archived: true }).catch(() => undefined);
+    });
+
+    expect(toastError).toHaveBeenCalledWith('Erro ao arquivar: not_owner');
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+});
+
+describe('useTalkXTemplates — duplicateTemplate', () => {
+  it('duplica pela RPC (que copia as variantes) e le a copia criada', async () => {
+    supabaseRpc.mockResolvedValue({ data: { ok: true, template_id: 'tpl-copia', variants_copied: 2 }, error: null });
+    const copia = { ...TEMPLATE, id: 'tpl-copia', name: 'Boas-vindas (cópia)', status: 'draft' as const };
+    const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    // A releitura da cópia é pelo `fromTable` (mesmo caminho da listagem).
+    listResult = { data: copia, error: null };
+
+    let criada: unknown = null;
+    await act(async () => {
+      criada = await result.current.duplicateTemplate.mutateAsync(TEMPLATE);
+    });
+
+    expect(calls(supabaseRpc)[0]).toEqual(['duplicate_talkx_template', { p_template_id: 'tpl-1' }]);
+    expect(criada).toEqual(copia);
     expect(toastSuccess).toHaveBeenCalledWith('Template duplicado');
   });
 
   it('avisa o erro do banco ao duplicar', async () => {
-    mutationResult = { data: null, error: { message: 'permission denied' } };
+    supabaseRpc.mockResolvedValue({ data: null, error: { message: 'permission denied' } });
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -458,6 +497,7 @@ describe('useTalkXTemplates — testTemplate', () => {
       mediaUrl: null,
       mediaType: null,
       phone: '5541999998888',
+      connectionId: 'conn-1',
       customVariables: ['nome'],
     });
 
@@ -472,6 +512,7 @@ describe('useTalkXTemplates — testTemplate', () => {
       mediaUrl: null,
       mediaType: null,
       phone: '5541999998888',
+      connectionId: 'conn-1',
       customVariables: ['nome'],
     });
   });
@@ -480,7 +521,7 @@ describe('useTalkXTemplates — testTemplate', () => {
     const result = await run({ response: jsonResponse({ success: false, error: 'numero invalido' }, false, 400) });
 
     await expect(
-      result.current.testTemplate({ templateContent: 'x', phone: '1' }),
+      result.current.testTemplate({ templateContent: 'x', phone: '1', connectionId: 'conn-1' }),
     ).rejects.toThrow('numero invalido');
   });
 
@@ -490,7 +531,7 @@ describe('useTalkXTemplates — testTemplate', () => {
     });
 
     await expect(
-      result.current.testTemplate({ templateContent: 'x', phone: '1' }),
+      result.current.testTemplate({ templateContent: 'x', phone: '1', connectionId: 'conn-1' }),
     ).rejects.toThrow('Erro 502');
   });
 
@@ -498,7 +539,7 @@ describe('useTalkXTemplates — testTemplate', () => {
     const result = await run({ response: jsonResponse({ success: false }) });
 
     await expect(
-      result.current.testTemplate({ templateContent: 'x', phone: '1' }),
+      result.current.testTemplate({ templateContent: 'x', phone: '1', connectionId: 'conn-1' }),
     ).rejects.toThrow('Erro 200');
   });
 });
