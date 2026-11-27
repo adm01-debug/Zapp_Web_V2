@@ -5,7 +5,9 @@
   "testSuites": [
     "scripts/automation.unit.mjs",
     "scripts/maintenance/maintenance.unit.mjs",
-    "scripts/graphify-local.unit.mjs"
+    "scripts/graphify-local.unit.mjs",
+    "scripts/db-audit/talkx-kit-usage.test.mjs",
+    "scripts/inventario/gerar-repo.unit.mjs"
   ],
   "motor": [
     "sh",
@@ -30,6 +32,42 @@
     "automation:uninstall-hooks": "node scripts/automation.mjs uninstall-hooks"
   },
   "registrations": [
+    {
+      "id": "x051-guarda-kit",
+      "kind": "test",
+      "files": [
+        "scripts/db-audit/talkx-kit-usage.test.mjs"
+      ],
+      "manual": [
+        "node",
+        "--test",
+        "scripts/db-audit/talkx-kit-usage.test.mjs"
+      ],
+      "triggers": [
+        "manual",
+        "PR",
+        "pushmain",
+        "prepush"
+      ]
+    },
+    {
+      "id": "inventario-gerar-repo",
+      "kind": "test",
+      "files": [
+        "scripts/inventario/gerar-repo.unit.mjs"
+      ],
+      "manual": [
+        "node",
+        "--test",
+        "scripts/inventario/gerar-repo.unit.mjs"
+      ],
+      "triggers": [
+        "manual",
+        "PR",
+        "pushmain",
+        "prepush"
+      ]
+    },
     {
       "id": "core",
       "kind": "tool",
