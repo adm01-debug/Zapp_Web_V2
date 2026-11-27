@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import {
   enforceRateLimit,
   errorResponse,
@@ -11,8 +11,6 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
-import { AUTO_PAUSE_MINUTES, AUTO_PAUSE_REASON } from '../_shared/instance-pause-actions.ts';
-import { isInstancePaused } from '../_shared/instance_pause.ts';
 import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import { providerErrorInfo } from '../_shared/messaging/errors.ts';
 import {
@@ -38,8 +36,6 @@ type Claim = {
   whatsapp_instance_name: string;
   contact_phone: string;
   claim_token: string;
-  /** Número desta tentativa (claim_outbound_message soma 1 a cada claim). */
-  delivery_attempt_count?: number | null;
 };
 
 interface ServiceClient {
@@ -166,17 +162,10 @@ function providerBodyText(body: unknown): string {
  * entrega, logo não ambíguo.
  */
 export function classifyProviderFailure(status: number, body: unknown): DeliveryFailure {
-  // 408 (Request Timeout) e 425 (Too Early): o provedor pode ter processado
-  // a requisição antes de retornar — efeito INCERTO, reconciliar.
-  if (status === 408 || status === 425) return unconfirmedReceiptFailure();
-
-  // 5xx: falha do lado do provedor; o body não é confiável para disambiguar.
+  if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
   if (status >= 500) {
     return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
   }
-
-  // Para 429 e 4xx: inspecionar body antes do early-return de 429 —
-  // um 429 com cue de instância fora do ar é instance_unavailable, não rate_limited.
   const text = providerBodyText(body);
   if (INSTANCE_DOWN_CUES.some((cue) => text.includes(cue))) {
     return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
@@ -188,8 +177,6 @@ export function classifyProviderFailure(status: number, body: unknown): Delivery
   if (info.code === 'auth_failed') {
     return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
   }
-
-  if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
   return PROMPT_REJECTED_FAILURE;
 }
 
@@ -450,15 +437,8 @@ export async function deliverOutbound(
   // Costura de teste do PD-80 (deps.evoFetch). O default é o evoFetch real, então
   // o caminho de produção e a resolução do token da instância não mudam.
   send: typeof evoFetch = evoFetch,
-  // Fix #4: token pré-resolvido antes do mark_outbound_post_started — se passado,
-  // pula a resolução interna (o token foi obtido antes do carimbo, portanto erros
-  // de lookup não são tratados como pós-POST).
-  preResolvedToken?: string,
 ): Promise<Response> {
-  // eslint-disable-next-line local/no-secret-compare
-  const instanceToken = preResolvedToken !== undefined
-    ? preResolvedToken
-    : await resolveInstanceToken(service, instanceName);
+  const instanceToken = await resolveInstanceToken(service, instanceName);
   return send(
     evolutionUrl,
     evolutionKey,
@@ -469,39 +449,6 @@ export async function deliverOutbound(
     undefined,
     instanceToken ?? undefined,
   );
-}
-
-export type DeliveryAttemptOutcome = 'claimed' | 'sent' | 'failed_retryable' | 'failed_final';
-
-/**
- * P1-1 (auditoria Conversas 2026-11-13): histórico por tentativa em
- * `message_attempts` (tabela e RPC `log_message_attempt` existiam desde
- * 20261011124430, mas nenhuma Edge gravava). Best-effort: nunca derruba o envio,
- * e só grava código estável + mensagem FIXA — nunca corpo do provedor, telefone
- * ou texto da mensagem.
- */
-export async function recordDeliveryAttempt(
-  service: ServiceClient,
-  claim: Pick<Claim, 'message_id' | 'delivery_attempt_count'>,
-  outcome: DeliveryAttemptOutcome,
-  info: { code?: DeliveryErrorCode; providerStatus?: number; startedAt?: number } = {},
-): Promise<void> {
-  const attemptNo = Math.max(1, Math.trunc(Number(claim.delivery_attempt_count) || 1));
-  try {
-    const { error } = await service.rpc('log_message_attempt', {
-      p_message_id: claim.message_id,
-      p_attempt_no: attemptNo,
-      p_outcome: outcome,
-      p_error_code: info.code ?? null,
-      p_error_message: info.code ? DELIVERY_ERROR_MESSAGES[info.code] : null,
-      p_provider_status: info.providerStatus ?? null,
-      p_provider_response: null,
-      p_duration_ms: info.startedAt === undefined ? null : Math.max(0, Math.round(Date.now() - info.startedAt)),
-    });
-    if (error) console.error(JSON.stringify({ event: 'message_delivery_attempt_log_error', code: error.code }));
-  } catch {
-    console.error(JSON.stringify({ event: 'message_delivery_attempt_log_error', code: 'exception' }));
-  }
 }
 
 async function failClaim(
@@ -530,10 +477,7 @@ async function classifyUnclaimedCause(
   existing: {
     status?: string | null; contact_id?: string | null;
     whatsapp_connection_id?: string | null;
-    delivery_post_started_at?: string | null;
-    delivery_claim_expires_at?: string | null;
   },
-  now: number = Date.now(),
 ): Promise<DeliveryFailure> {
   // Mensagem sem contato (envio para GRUPO, `whatsapp_group_id`; 20261011155946):
   // o destino é o JID do grupo, não um telefone de `contacts`. Esta leitura de
@@ -542,17 +486,6 @@ async function classifyUnclaimedCause(
   // anterior: 'sending' = em andamento (409); estado final sem recibo = terminal.
   // Também não seleciona `whatsapp_group_id`: a coluna só existe depois do apply
   // dessa migration, e a função não pode depender dela.
-  // PD-79: POST já iniciado = resultado ambíguo, independente do estado da conexão.
-  // Verificar ANTES de qualquer lookup de contato/conexão: uma conexão que cai
-  // após o POST sair não torna o resultado "não ambíguo".
-  // Exceção: lease AINDA VIVO = o envio que carimbou continua em voo (ex.: duplo
-  // clique durante o POST) → "em andamento" (409), não "pode ter sido entregue".
-  if (existing.delivery_post_started_at && existing.status === 'sending') {
-    const leaseExpiresAt = existing.delivery_claim_expires_at
-      ? Date.parse(existing.delivery_claim_expires_at) : Number.NaN;
-    if (Number.isFinite(leaseExpiresAt) && leaseExpiresAt > now) return IN_PROGRESS_FAILURE;
-    return unconfirmedReceiptFailure();
-  }
   if (!existing.contact_id) {
     return existing.status === 'sending' ? IN_PROGRESS_FAILURE : TERMINAL_WITHOUT_RECEIPT_FAILURE;
   }
@@ -701,7 +634,7 @@ export async function handleMessageDeliveryRequest(
   if (!claim) {
     const { data: existing, error: existingError } = await service
       .from('messages')
-      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id, delivery_claim_expires_at, delivery_post_started_at')
+      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id')
       .eq('id', messageId)
       .maybeSingle();
     if (existingError || !existing || existing.agent_id !== profile.id || existing.sender !== 'agent') {
@@ -712,14 +645,10 @@ export async function handleMessageDeliveryRequest(
     }
     // Claim vazio: a causa decide o código — conexão fora do ar, número
     // inválido, lease vivo em outro worker ou linha terminal sem recibo.
-    // PD-79: "POST iniciado + lease vencido" vira receipt_unconfirmed (ambíguo);
-    // a linha fica em 'sending' até o operador resolvê-la explicitamente
-    // (resolve_unconfirmed_message). Não reenviamos.
+    // PD-79: o subcaso "POST iniciado + lease vencido" continua resolvido pelo
+    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.
     return deliveryFailureResponse(await classifyUnclaimedCause(service, existing), req);
   }
-
-  const attemptStartedAt = Date.now();
-  await recordDeliveryAttempt(service, claim, 'claimed');
 
   // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
   // ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio).
@@ -751,96 +680,42 @@ export async function handleMessageDeliveryRequest(
       if (!richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
-    // C121: instância pausada não envia. A checagem vem ANTES do carimbo durável e do
-    // POST: nada foi ao provedor (sem efeito incerto, sem reconciliação), então encerra
-    // como falha visível. Leitura da RPC é fail-open (ver _shared/instance_pause.ts): a
-    // pausa é proteção operacional, não pré-requisito de entrega.
-    if (await isInstancePaused(service, claim.whatsapp_instance_name,
-      (code) => console.error(JSON.stringify({ event: 'message_delivery_pause_check_error', code })))) {
-      await failClaim(service, claim);
-      console.error(JSON.stringify({ event: 'message_delivery_instance_paused' }));
-      return errorResponse('Instance is paused; resend after it is resumed', 409, req);
-    }
-    // Fix #4: resolver o token da instância ANTES do carimbo — se o lookup falhar,
-    // nada foi enviado ainda (erro pré-dispatch sem ambiguidade).
-    const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name) ?? undefined;
-    // PD-79: carimbo durável antes do POST — fencing contra reenvio após lease vencido.
-    // Falha aqui = infra pré-dispatch: nada saiu, sem ambiguidade.
-    let markError: { code?: string } | null;
-    try {
-      ({ error: markError } = await service.rpc('mark_outbound_post_started', {
-        p_message_id: claim.message_id,
-        p_claim_token: claim.claim_token,
-      }));
-    } catch {
-      // Exceção (rede/cliente) no carimbo também é infra pré-dispatch: nada saiu.
-      throw new PreDispatchInfraError('mark_outbound_post_started_failed');
-    }
+    // PD-79: carimba o POST antes de disparar. Lease vencido ou token que não é
+    // o dono atual ⇒ nada sai para o provedor (a RPC recusa) e o re-claim decide.
+    const { error: markError } = await service.rpc('mark_outbound_post_started', {
+      p_message_id: claim.message_id,
+      p_claim_token: claim.claim_token,
+    });
     if (markError) {
-      // Pré-DDL: a Edge é publicada automaticamente no push da main, mas a migration
-      // 20261111160000 só roda pelo db-migrate (manual, com aprovação). Enquanto a RPC
-      // não existe no schema cache, o PostgREST devolve PGRST202 e o envio segue o
-      // fluxo anterior ao PD-79 — sem carimbo — em vez de derrubar todo envio.
-      // SÓ PGRST202: um 42883 viria de DENTRO de uma função existente (defeito real)
-      // e continua sendo infra pré-dispatch como qualquer outro erro: nada saiu.
-      if (markError.code === 'PGRST202') {
-        console.error(JSON.stringify({
-          event: 'message_delivery_post_stamp_unavailable',
-          level: 'alert',
-          code: markError.code,
-          detail: 'fencing PD-79 desligado: mark_outbound_post_started ausente no schema cache',
-        }));
-      } else {
-        throw new PreDispatchInfraError('mark_outbound_post_started_failed');
-      }
+      console.error(JSON.stringify({ event: 'message_delivery_post_mark_refused', code: markError.code }));
+      throw new PreDispatchInfraError('post_mark_refused');
     }
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(
       service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
-      undefined, fetchProvider, instanceToken,
+      undefined, fetchProvider,
     );
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
 
     if (!providerResponse.ok) {
+      await failClaim(service, claim);
       const failure = classifyProviderFailure(providerResponse.status, providerData ?? raw);
-      // C121/IP1: 429 aqui tambem pausa a instancia por 30 min. Este e o caminho
-      // real de entrega da inbox (deliverOutbound chama o adaptador direto, sem
-      // passar pelo proxy da evolution-api), entao sem isto a protecao nao valia no
-      // fluxo principal de atendimento. Falha ao registrar nao altera a resposta.
-      if (providerResponse.status === 429 && claim.whatsapp_instance_name) {
-        const { error: autoPauseError } = await service.rpc('auto_pause_instance', {
-          p_instance: claim.whatsapp_instance_name,
-          p_minutes: AUTO_PAUSE_MINUTES,
-          p_reason: AUTO_PAUSE_REASON,
-        });
-        if (autoPauseError) {
-          console.warn(JSON.stringify({ event: 'auto_pause_instance_failed', code: autoPauseError.code }));
-        }
-      }
+      // 5xx: o provedor pode ter aceitado antes de falhar → efeito INCERTO.
+      // 4xx/429: rejeição definitiva, nada a reconciliar.
       if (failure.ambiguous) {
-        // POST efeito incerto (408/425/5xx): o provedor pode ter processado — reconciliar.
         await enqueueDeliveryReconciliation(service, claim, null);
-      } else {
-        // Rejeição definitiva (4xx): o provedor não processou o envio — marcar failed.
-        await failClaim(service, claim);
       }
-      await recordDeliveryAttempt(service, claim, failure.ambiguous ? 'failed_retryable' : 'failed_final', {
-        code: failure.code, providerStatus: providerResponse.status, startedAt: attemptStartedAt,
-      });
       console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status, code: failure.code }));
       return deliveryFailureResponse(failure, req);
     }
 
     externalId = extractMessageId(providerData) ?? null;
     if (!externalId || externalId.length > 512) {
-      // C110: sem chamar failClaim — POST saiu, resultado ambíguo.
+      await failClaim(service, claim);
       // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
       await enqueueDeliveryReconciliation(service, claim, null);
-      await recordDeliveryAttempt(service, claim, 'failed_retryable', {
-        code: 'receipt_unconfirmed', providerStatus: providerResponse.status, startedAt: attemptStartedAt,
-      });
       console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
       return deliveryFailureResponse(unconfirmedReceiptFailure(), req);
     }
@@ -852,12 +727,12 @@ export async function handleMessageDeliveryRequest(
       p_delivery_status: 'sent',
     });
     if (completeError || !completed?.id) {
-      // C110: não chamar failClaim — POST iniciado, externalId existe.
+      // Evolution may have accepted the send even though its receipt could not
+      // be persisted. Make this terminal so an expired lease can never resend
+      // the same WhatsApp message; reconciliation is an explicit operation.
+      await failClaim(service, claim);
       // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
       await enqueueDeliveryReconciliation(service, claim, externalId);
-      await recordDeliveryAttempt(service, claim, 'failed_retryable', {
-        code: 'receipt_unconfirmed', providerStatus: providerResponse.status, startedAt: attemptStartedAt,
-      });
       console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
       return deliveryFailureResponse(unconfirmedReceiptFailure(), req);
     }
@@ -867,14 +742,9 @@ export async function handleMessageDeliveryRequest(
     // (20260903225000 + 20261006211248). A RPC mark_first_response aqui era
     // redundante e falhava sempre com 42501: ela exige auth.uid() e este caminho roda
     // com service_role. Nada a fazer depois do recibo.
-    await recordDeliveryAttempt(service, claim, 'sent', {
-      providerStatus: providerResponse.status, startedAt: attemptStartedAt,
-    });
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
-    // C110: só chama failClaim antes do POST — se o POST foi iniciado, a mensagem
-    // fica no estado atual (delivery_post_started_at setado) para reconciliação.
-    if (!providerPostAttempted) await failClaim(service, claim);
+    await failClaim(service, claim);
     // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
     // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
     // Antes do POST há dois casos: infra (storage/payload ilegível — nada
@@ -886,9 +756,6 @@ export async function handleMessageDeliveryRequest(
     if (providerPostAttempted) {
       await enqueueDeliveryReconciliation(service, claim, externalId);
     }
-    await recordDeliveryAttempt(service, claim, providerPostAttempted ? 'failed_retryable' : 'failed_final', {
-      code: failure.code, startedAt: attemptStartedAt,
-    });
     console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
     return deliveryFailureResponse(failure, req);
   }

@@ -189,8 +189,6 @@ function makeClient(cfg: {
   /** Linhas de `contacts` e `whatsapp_connections` (classificação do claim vazio). */
   contacts?: RpcResult[];
   connections?: RpcResult[];
-  /** C121: resposta de `is_instance_paused` (default: não pausada). */
-  instancePaused?: boolean;
 }): FakeClient {
   const rpcCalls: { fn: string; args?: Row }[] = [];
   const messagesQueue: RpcResult[] = [...(cfg.messages ?? [])];
@@ -221,7 +219,6 @@ function makeClient(cfg: {
       if (fn === 'claim_outbound_message') return cfg.claim ?? { data: [], error: null };
       if (fn === 'complete_outbound_message') return cfg.complete ?? { data: { id: 'msg-1', status: 'sent' }, error: null };
       if (fn === 'enqueue_ai_job') return { data: 'job-1', error: null };
-      if (fn === 'is_instance_paused') return { data: cfg.instancePaused === true, error: null };
       return { data: null, error: null };
     },
   };
@@ -299,55 +296,7 @@ function assertReconcileEnqueued(client: FakeClient, expectedExternalId: string 
   assertEqual(payload.external_id, expectedExternalId, 'reconcile payload.external_id');
 }
 
-// ── C121: pausa de instância ─────────────────────────────────────────────────
-// Instância pausada não envia. A checagem roda ANTES do carimbo durável
-// (mark_outbound_post_started) e do POST: nada saiu, então não há efeito
-// incerto e nada a reconciliar — o claim encerra como falha visível.
-Deno.test('C121: instância pausada não posta ao provedor e encerra em 409', async () => {
-  const client = makeClient({ claim: { data: [CLAIM], error: null }, instancePaused: true });
-  let posts = 0;
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
-    posts++;
-    return jsonOf(200, { key: { id: 'nao-deveria-enviar' } });
-  }));
-  assertStatus(response.status, 409);
-  assertEqual(posts, 0, 'nenhum POST ao provedor com a instância pausada');
-  assertEqual(rpcArgs(client, 'is_instance_paused')?.p_instance, 'main', 'instância consultada');
-  assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'mark_outbound_post_started'), false, 'não carimba o POST');
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'nada a reconciliar: o POST não saiu');
-});
-
-// Fail-open: a pausa é proteção operacional, não pré-requisito de entrega — a
-// RPC indisponível NÃO pode derrubar o envio (ver _shared/instance_pause.ts).
-Deno.test('C121: erro na leitura da pausa não bloqueia o envio (fail-open)', async () => {
-  const client = makeClient({
-    claim: { data: [CLAIM], error: null },
-    rpcErrors: { is_instance_paused: { code: '42501' } },
-  });
-  let posts = 0;
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
-    posts++;
-    return jsonOf(200, { key: { id: 'wa-message-id' } });
-  }));
-  assertEqual(posts, 1, 'o envio segue quando a leitura da pausa falha');
-  assertStatus(response.status, 200);
-});
-
-// Guarda de ordem no FONTE: o teste de comportamento acima prova o caminho
-// pausado, e este impede que uma refatoração mova a checagem para depois do
-// carimbo/POST (aí a pausa chegaria tarde, com a mensagem já no provedor).
-Deno.test('C121: a checagem de pausa roda antes do carimbo e do POST ao provedor', async () => {
-  const src = await Deno.readTextFile(new URL('./index.ts', import.meta.url));
-  const pausa = src.indexOf('await isInstancePaused(');
-  const carimbo = src.indexOf("mark_outbound_post_started'", pausa);
-  const envio = src.indexOf('providerPostAttempted = true;', pausa);
-  if (pausa < 0 || carimbo < 0 || envio < 0 || pausa > carimbo || pausa > envio) {
-    throw new Error('isInstancePaused precisa vir antes de carimbar e de postar ao provedor');
-  }
-});
-
-Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo; POST iniciado chama failClaim', async () => {
+Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo e sem reconciliação', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(400, { message: 'Number is not registered on WhatsApp' })));
@@ -357,10 +306,10 @@ Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não
   assertEqual(body.retryable, false, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
   assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job não chamado');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
 });
 
-Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409); POST iniciado chama failClaim', async () => {
+Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409) sem confundir com número inválido', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(400, { message: 'Connection Closed' })));
@@ -370,10 +319,10 @@ Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409); 
   assertEqual(body.retryable, true, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
   assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job não chamado');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
 });
 
-Deno.test('PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado chama failClaim', async () => {
+Deno.test('PD-80: 401 do provedor vira code=instance_unavailable', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(401, { message: 'Unauthorized' })));
@@ -383,32 +332,10 @@ Deno.test('PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado 
   assertEqual(body.retryable, true, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
   assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job não chamado');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
 });
 
-// C121/IP1: este e o caminho REAL de entrega da inbox — deliverOutbound chama o
-// adaptador direto, sem passar pelo proxy da evolution-api. Sem a auto-pausa aqui, o
-// limite do provedor nao freava o fluxo principal de atendimento (achado do Codex na #3144).
-Deno.test('C121/IP1: 429 do provedor na entrega pausa a instância por 30 min', async () => {
-  const client = makeClient({ claim: { data: [CLAIM], error: null } });
-  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
-    jsonOf(429, { message: 'Too Many Requests' })));
-  const pausa = rpcArgs(client, 'auto_pause_instance');
-  if (!pausa) throw new Error('auto_pause_instance não foi chamado');
-  assertEqual(pausa.p_instance, 'main', 'auto_pause p_instance');
-  assertEqual(pausa.p_minutes, 30, 'auto_pause p_minutes');
-});
-
-// Só o limite de envio pausa: rejeição definitiva por conteúdo não pode tirar a
-// instância do ar.
-Deno.test('C121/IP1: rejeição 400 do provedor NÃO pausa a instância', async () => {
-  const client = makeClient({ claim: { data: [CLAIM], error: null } });
-  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
-    jsonOf(400, { message: 'Bad Request' })));
-  assertEqual(rpcCalled(client, 'auto_pause_instance'), false, 'auto_pause_instance não deve ser chamado');
-});
-
-Deno.test('PD-80: 429 do provedor vira code=rate_limited; POST iniciado chama failClaim', async () => {
+Deno.test('PD-80: 429 do provedor vira code=rate_limited e não reconcilia', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(429, { message: 'Too Many Requests' })));
@@ -418,10 +345,10 @@ Deno.test('PD-80: 429 do provedor vira code=rate_limited; POST iniciado chama fa
   assertEqual(body.retryable, true, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
   assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job não chamado');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
 });
 
-Deno.test('PD-80: recusa 4xx genérica do provedor chama failClaim quando POST foi iniciado', async () => {
+Deno.test('PD-80: recusa 4xx genérica do provedor não reconcilia (só 5xx/ambíguo reconcilia)', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(400, { message: 'recipient blocked you' })));
@@ -430,7 +357,7 @@ Deno.test('PD-80: recusa 4xx genérica do provedor chama failClaim quando POST f
   assertEqual(body.code, 'provider_rejected', 'code');
   assertEqual(body.ambiguous, false, 'ambiguous');
   assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job não chamado');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
 });
 
 Deno.test('PD-80: 5xx do provedor vira code=provider_unavailable, ambíguo e reconcilia; sem dado pessoal no corpo', async () => {
@@ -442,7 +369,7 @@ Deno.test('PD-80: 5xx do provedor vira code=provider_unavailable, ambíguo e rec
   assertEqual(body.code, 'provider_unavailable', 'code');
   assertEqual(body.retryable, false, 'retryable');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertFailClaim(client);
   assertReconcileEnqueued(client, null);
   const serialized = JSON.stringify(body);
   if (serialized.includes(CONTACT_PHONE)) throw new Error('resposta vazou telefone do provedor');
@@ -457,7 +384,7 @@ Deno.test('PD-80: 200 sem id do provedor vira code=receipt_unconfirmed e reconci
   const body = await response.json() as Row;
   assertEqual(body.code, 'receipt_unconfirmed', 'code');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertFailClaim(client);
   assertReconcileEnqueued(client, null);
 });
 
@@ -472,7 +399,7 @@ Deno.test('PD-80: falha ao gravar o recibo (pós-POST) vira code=receipt_unconfi
   const body = await response.json() as Row;
   assertEqual(body.code, 'receipt_unconfirmed', 'code');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertFailClaim(client);
   assertReconcileEnqueued(client, 'wamid.provider-1');
 });
 
@@ -502,7 +429,7 @@ Deno.test('PD-80: exceção de rede DEPOIS do POST vira code=receipt_unconfirmed
   const body = await response.json() as Row;
   assertEqual(body.code, 'receipt_unconfirmed', 'code');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertFailClaim(client);
   assertReconcileEnqueued(client, null);
 });
 
@@ -569,10 +496,6 @@ Deno.test('PD-80: classifyProviderFailure é a fonte única do código por ramo'
   assertEqual(classifyProviderFailure(400, { message: 'recipient blocked you' }).code, 'provider_rejected', '400 recusa');
   assertEqual(classifyProviderFailure(500, {}).ambiguous, true, '500 ambiguo');
   assertEqual(classifyProviderFailure(422, { message: 'no such user' }).ambiguous, false, '422 nao ambiguo');
-  // C110: 408 e 425 são timeout/ambíguo — não provider_rejected
-  assertEqual(classifyProviderFailure(408, {}).code, 'receipt_unconfirmed', '408 timeout ambiguo');
-  assertEqual(classifyProviderFailure(425, {}).code, 'receipt_unconfirmed', '425 too early ambiguo');
-  assertEqual(classifyProviderFailure(408, {}).ambiguous, true, '408 ambiguo');
 });
 
 Deno.test('PD-80: claim vazio de mensagem de OUTRO agente devolve 404 (linha EXISTE e é negada, não é 409)', async () => {
@@ -850,157 +773,4 @@ Deno.test('PD-80 [merge main/E15]: o handler continua entregando com o token da 
   assertEqual(rpcArgs(client, 'get_instance_token')?.p_instance_id, 'inst-token-test', 'get_instance_token p_instance_id');
   if (!seenPath) throw new Error('evoFetch não foi chamado');
   resetInstanceTokenCache();
-});
-
-Deno.test('PD-79 [pré-DDL]: RPC mark_outbound_post_started ainda inexistente (PGRST202) não derruba o envio — entrega sem carimbo', async () => {
-  resetInstanceTokenCache();
-  const client = makeClient({
-    claim: { data: [CLAIM], error: null },
-    rpcErrors: { mark_outbound_post_started: { code: 'PGRST202', message: 'Could not find the function' } },
-  });
-  let provedorChamado = false;
-  const deps = makeDeps(client, async () => {
-    provedorChamado = true;
-    return jsonOf(200, { key: { id: 'wamid.pre-ddl' } });
-  });
-  const response = await handleMessageDeliveryRequest(postRequest(), deps);
-  assertStatus(response.status, 200);
-  if (!provedorChamado) throw new Error('provedor deveria ter sido chamado sem o carimbo');
-  if (!rpcCalled(client, 'complete_outbound_message')) throw new Error('envio deveria ser concluído');
-  resetInstanceTokenCache();
-});
-
-Deno.test('PD-79: outro erro do carimbo (ex.: lease vencido) continua bloqueando antes do POST', async () => {
-  resetInstanceTokenCache();
-  const client = makeClient({
-    claim: { data: [CLAIM], error: null },
-    rpcErrors: { mark_outbound_post_started: { code: 'P0001', message: 'stale_claim' } },
-  });
-  let provedorChamado = false;
-  const deps = makeDeps(client, async () => {
-    provedorChamado = true;
-    return jsonOf(200, { key: { id: 'wamid.nao-deveria' } });
-  });
-  await handleMessageDeliveryRequest(postRequest(), deps);
-  if (provedorChamado) throw new Error('provedor NÃO pode ser chamado quando o carimbo falha por outro motivo');
-  resetInstanceTokenCache();
-});
-
-// ── PD-79: claim vazio com POST carimbado — lease vivo x vencido ─────────────
-Deno.test('PD-79: POST carimbado com lease AINDA VIVO é 409 in_progress (duplo clique durante o envio)', async () => {
-  const client = makeClient({
-    messages: [{ data: {
-      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
-      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
-      delivery_post_started_at: new Date(Date.now() - 5_000).toISOString(),
-      delivery_claim_expires_at: new Date(Date.now() + 60_000).toISOString(),
-    }, error: null }],
-  });
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
-    throw new Error('provider must not be called');
-  }));
-  assertStatus(response.status, 409);
-  const body = await response.json() as Row;
-  assertEqual(body.code, 'in_progress', 'code');
-  assertEqual(body.ambiguous, false, 'ambiguous');
-});
-
-Deno.test('PD-79: POST carimbado com lease VENCIDO continua 502 receipt_unconfirmed (ambíguo, sem reenvio)', async () => {
-  const client = makeClient({
-    messages: [{ data: {
-      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
-      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
-      delivery_post_started_at: new Date(Date.now() - 200_000).toISOString(),
-      delivery_claim_expires_at: new Date(Date.now() - 100_000).toISOString(),
-    }, error: null }],
-  });
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
-    throw new Error('provider must not be called');
-  }));
-  assertStatus(response.status, 502);
-  const body = await response.json() as Row;
-  assertEqual(body.code, 'receipt_unconfirmed', 'code');
-  assertEqual(body.ambiguous, true, 'ambiguous');
-});
-
-Deno.test('PD-79: 42883 no mark_outbound_post_started NÃO é tolerado (só PGRST202): nada sai, failClaim', async () => {
-  resetInstanceTokenCache();
-  let providerCalled = false;
-  const client = makeClient({
-    claim: { data: [CLAIM], error: null },
-    rpcErrors: { mark_outbound_post_started: { code: '42883', message: 'function x does not exist' } },
-  });
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
-    providerCalled = true;
-    return jsonOf(200, { key: { id: 'wamid.x' } });
-  }));
-  assertEqual(providerCalled, false, 'provider não chamado');
-  assertStatus(response.status, 503);
-  assertFailClaim(client);
-  resetInstanceTokenCache();
-});
-
-Deno.test('PD-79: exceção LANÇADA no mark_outbound_post_started é infra (503 provider_unavailable, retryable), não 422 media_invalid', async () => {
-  resetInstanceTokenCache();
-  let providerCalled = false;
-  const client = makeClient({
-    claim: { data: [CLAIM], error: null },
-    rpcThrows: ['mark_outbound_post_started'],
-  });
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
-    providerCalled = true;
-    return jsonOf(200, { key: { id: 'wamid.x' } });
-  }));
-  assertEqual(providerCalled, false, 'provider não chamado');
-  assertStatus(response.status, 503);
-  const body = await response.json() as Row;
-  assertEqual(body.code, 'provider_unavailable', 'code');
-  assertEqual(body.retryable, true, 'retryable');
-  assertEqual(body.ambiguous, false, 'ambiguous');
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'sem reconciliação');
-  assertFailClaim(client);
-  resetInstanceTokenCache();
-});
-
-// P1-1 (auditoria Conversas 2026-11-13): message_attempts passa a ser gravada a cada tentativa.
-function attemptOutcomes(client: FakeClient): string[] {
-  return client.rpcCalls
-    .filter((call) => call.fn === 'log_message_attempt')
-    .map((call) => String(call.args?.p_outcome));
-}
-
-Deno.test('P1-1: caminho feliz grava claimed + sent em message_attempts, sem corpo do provedor', async () => {
-  const client = makeClient({ claim: { data: [{ ...CLAIM, delivery_attempt_count: 2 }], error: null } });
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
-    jsonOf(200, { key: { id: 'wamid.provider-3' } })));
-  assertStatus(response.status, 200);
-  assertEqual(attemptOutcomes(client).join(','), 'claimed,sent', 'outcomes');
-  for (const call of client.rpcCalls.filter((c) => c.fn === 'log_message_attempt')) {
-    assertEqual(call.args?.p_attempt_no, 2, 'attempt_no vem do claim');
-    assertEqual(call.args?.p_provider_response, null, 'nunca grava o corpo do provedor');
-  }
-});
-
-Deno.test('P1-1: recusa definitiva grava failed_final com código estável e status do provedor', async () => {
-  const client = makeClient({ claim: { data: [CLAIM], error: null } });
-  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
-    jsonOf(400, { message: 'Number is not registered on WhatsApp' })));
-  assertEqual(attemptOutcomes(client).join(','), 'claimed,failed_final', 'outcomes');
-  const final = client.rpcCalls.find((c) => c.fn === 'log_message_attempt' && c.args?.p_outcome === 'failed_final');
-  assertEqual(final?.args?.p_error_code, 'invalid_number', 'error_code');
-  assertEqual(final?.args?.p_provider_status, 400, 'provider_status');
-  assertEqual(final?.args?.p_attempt_no, 1, 'attempt_no padrão 1');
-});
-
-Deno.test('P1-1: 5xx (ambíguo) grava failed_retryable, nunca failed_final', async () => {
-  const client = makeClient({ claim: { data: [CLAIM], error: null } });
-  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => jsonOf(502, { message: 'bad gateway' })));
-  assertEqual(attemptOutcomes(client).join(','), 'claimed,failed_retryable', 'outcomes');
-});
-
-Deno.test('P1-1: falha ao gravar a tentativa não derruba o envio', async () => {
-  const client = makeClient({ claim: { data: [CLAIM], error: null }, rpcThrows: ['log_message_attempt'] });
-  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
-    jsonOf(200, { key: { id: 'wamid.provider-4' } })));
-  assertStatus(response.status, 200);
 });
