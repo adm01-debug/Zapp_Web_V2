@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "c0a66203dba77f9a7d1f25a78a91be7aa4115540",
+  "sha": "1c90916bd587db99cb753688122f535e72c114b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 23:08 UTC",
-  "files_total": 14768,
-  "code_files": 8298,
-  "code_lines": 1249723
+  "generated_at": "2026-11-27 00:00 UTC",
+  "files_total": 14769,
+  "code_files": 8299,
+  "code_lines": 1249744
  },
  "version": "1.3.2",
- "facts_hash": "a5fd33057b124a37",
+ "facts_hash": "900c5b99236ec0eb",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,7 +367,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3078,
+   ".sql": 3079,
    ".tsx": 2531,
    ".ts": 2066,
    ".mjs": 496,
@@ -48699,6 +48699,7 @@
    "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+   "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql",
    "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
    "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -63984,6 +63985,14 @@
     "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
    },
    {
+    "kind": "grant",
+    "privs": "select",
+    "object": "talkx_test_sends",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql"
+   },
+   {
     "kind": "revoke",
     "privs": "all",
     "object": "resumo_orcamento_ia",
@@ -78556,8 +78565,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1167,
-   "lines": 117430,
+   "files": 1168,
+   "lines": 117451,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -265708,6 +265717,7 @@
    "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+   "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql",
    "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
    "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -281211,6 +281221,14 @@
     "objkind": "function",
     "roles": "service_role",
     "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "talkx_test_sends",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql"
    },
    {
     "kind": "revoke",
@@ -427677,6 +427695,11 @@
    ],
    "uses_service_role": true
   },
+  "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql": {
+   "path": "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql",
+   "lines": 21,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql": {
    "path": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
    "lines": 100,
@@ -431611,10 +431634,19 @@
   }
  },
  "git": {
-  "sha": "c0a66203dba77f9a7d1f25a78a91be7aa4115540",
+  "sha": "1c90916bd587db99cb753688122f535e72c114b4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1c90916b",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "fix(talkx): trilha do envio de teste volta a ser legivel (grant select) (#3410)",
+    "files": [
+     "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql"
+    ]
+   },
    {
     "sha": "c0a66203",
     "date": "2026-11-26",
@@ -432083,17 +432115,6 @@
     "files": [
      "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql"
     ]
-   },
-   {
-    "sha": "c8163184",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)",
-    "files": [
-     "src/components/admin/AdminCRMDashboard.tsx",
-     "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
-     "src/hooks/system/useMultiplixDeadLetters.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -432162,6 +432183,10 @@
     2
    ],
    [
+    "supabase/migrations/20261127160000_talkx_test_sends_grant_read.sql",
+    1
+   ],
+   [
     "src/components/monitoring/DeadLetterReplayPanel.tsx",
     1
    ],
@@ -432171,10 +432196,6 @@
    ],
    [
     "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
-    1
-   ],
-   [
-    "src/components/monitoring/hooks/useDeadLetterReplay.ts",
     1
    ]
   ]

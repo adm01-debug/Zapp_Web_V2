@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c0a66203dba77f9a7d1f25a78a91be7aa4115540",
+  "commit": "1c90916bd587db99cb753688122f535e72c114b4",
   "branch": "main",
-  "data_commit": "2026-11-26T22:55:55Z",
+  "data_commit": "2026-11-26T23:38:08Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1c90916b",
+    "data": "2026-11-26",
+    "assunto": "fix(talkx): trilha do envio de teste volta a ser legivel (grant select) (#3410)"
+   },
    {
     "sha": "c0a66203",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "501f3bb5",
     "data": "2026-11-26",
     "assunto": "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)"
-   },
-   {
-    "sha": "3d99ff1c",
-    "data": "2026-11-26",
-    "assunto": "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)"
    }
   ],
-  "arquivos_mudados_7d": 2865,
+  "arquivos_mudados_7d": 2866,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 736
+    "mudancas": 735
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14921,
+  "arquivos_total": 14922,
   "arquivos_codigo": 5247,
   "linhas_codigo": 970918,
   "rotas": 21,
@@ -326,7 +326,7 @@
   "hooks": 538,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1167,
+  "migrations": 1168,
   "cron_jobs": 29,
   "testes": 2870,
   "workflows": 26,

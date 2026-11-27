@@ -1,17 +1,17 @@
-# Graph Report - Zapp_Web_V2  (2026-11-26)
+# Graph Report - Zapp_Web_V2  (2026-11-27)
 
 ## Corpus Check
-- 13806 files · ~16,393,084 words
+- 13807 files · ~16,393,274 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 100 file(s) not represented in the graph (top: .tsv 39, .csv 13, .css 12)
 
 ## Summary
-- 96950 nodes · 162803 edges · 8950 communities (5439 shown, 3511 thin omitted)
+- 96951 nodes · 162803 edges · 8951 communities (5439 shown, 3512 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 11198 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c0a66203`
+- Built from commit: `1c90916b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -7078,7 +7078,7 @@
 ## Import Cycles
 - 5-file cycle: `src/hooks/auth/useAuth.tsx -> src/hooks/system/useOfflineCache.ts -> src/hooks/chat/useRealtimeMessages.ts -> src/hooks/realtime/useRealtimeNotifications.ts -> src/hooks/system/useNotificationSettings.ts -> src/hooks/auth/useAuth.tsx`
 
-## Communities (8950 total, 3511 thin omitted)
+## Communities (8951 total, 3512 thin omitted)
 
 ### Community 0 - "Communities (8869 total, 3472 thin omitted)"
 Cohesion: 0.00
@@ -28864,8 +28864,8 @@ Nodes (3): idx_team_conversations_direct_member_a, idx_team_conversations_direct
 
 ## Knowledge Gaps
 - **43259 isolated node(s):** `session-start.sh script`, `PATH`, `target`, `module`, `moduleResolution` (+43254 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 58588 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **3511 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 58589 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **3512 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
