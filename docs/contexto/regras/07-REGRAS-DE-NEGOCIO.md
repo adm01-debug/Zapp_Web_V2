@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b40c422be1` · branch `main` · 2026-11-27 02:19 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5618ef5716` · branch `main` · 2026-11-27 17:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4776,7 +4776,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23375 testes em 2478 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23376 testes em 2479 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5080,7 +5080,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/audio/__tests__/gravacaoFormato.test.ts` | 17 | escolherMimeGravacao · escolhe webm/opus quando o navegador suporta (Chrome/Edge/Firefox) · escolhe audio/mp4 no Safari, que recusa webm · devolve null quando nenhum formato da lista é suportado (navegador decide o padrão) … |
 | `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
-| … +2178 linhas — lista completa em `context.json` | | |
+| … +2179 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b40c422be173c98eaeaf6518e2eb69d3f28f7ca2",
+  "commit": "5618ef5716b9fda0ca8d7d5afd6aa37b668727a6",
   "branch": "main",
-  "data_commit": "2026-11-26T22:46:05-03:00",
+  "data_commit": "2026-11-27T14:28:25-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5618ef57",
+    "data": "2026-11-27",
+    "assunto": "test: recupera guardas TalkX X051 e inventario de repo (#3432)"
+   },
    {
     "sha": "b40c422b",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "ec33e1ea",
     "data": "2026-11-26",
     "assunto": "feat: painel do segmento mostra as tags mais usadas no público (talkx_segment_tags) (#3407)"
-   },
-   {
-    "sha": "bcfebb7a",
-    "data": "2026-11-26",
-    "assunto": "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)"
    }
   ],
-  "arquivos_mudados_7d": 2893,
+  "arquivos_mudados_7d": 2896,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 735
+    "mudancas": 723
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -235,7 +235,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 10
+    "mudancas": 11
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
@@ -258,6 +258,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/automation.config.json",
+    "mudancas": 7
+   },
+   {
     "arquivo": "scripts/ci/eslint-baseline.json",
     "mudancas": 7
    },
@@ -267,10 +271,6 @@
    },
    {
     "arquivo": "package.json",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/automation.config.json",
     "mudancas": 6
    },
    {
@@ -290,11 +290,11 @@
     "mudancas": 5
    },
    {
-    "arquivo": "bun.lock",
+    "arquivo": "TESTING_CONVENTION.md",
     "mudancas": 5
    },
    {
-    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
+    "arquivo": "bun.lock",
     "mudancas": 5
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14928,
-  "arquivos_codigo": 5251,
-  "linhas_codigo": 972911,
+  "arquivos_total": 14930,
+  "arquivos_codigo": 5253,
+  "linhas_codigo": 973040,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
@@ -328,7 +328,7 @@
   "tabelas": 224,
   "migrations": 1169,
   "cron_jobs": 29,
-  "testes": 2872,
+  "testes": 2874,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3989
@@ -639,8 +639,8 @@
    "linhas": 142
   },
   "scripts/db-audit": {
-   "arquivos": 95,
-   "linhas": 17887
+   "arquivos": 96,
+   "linhas": 17949
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -675,8 +675,8 @@
    "linhas": 845
   },
   "scripts/inventario": {
-   "arquivos": 4,
-   "linhas": 830
+   "arquivos": 5,
+   "linhas": 897
   },
   "scripts/lib": {
    "arquivos": 2,

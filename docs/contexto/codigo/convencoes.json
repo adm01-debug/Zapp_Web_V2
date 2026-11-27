@@ -23,8 +23,8 @@
   ],
   "testes": [
    "co-localizado (__tests__) (2144)",
-   "outro (260)",
-   "co-localizado (*.test) (203)"
+   "outro (261)",
+   "co-localizado (*.test) (204)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "test: recupera guardas TalkX X051 e inventario de repo (#3432)",
    "fix(ci): separa falha de infraestrutura do aviso de apply pendente no guard de migrations (#3430)",
    "feat(journey): recupera o hook da timeline do historico (J08) (#3429)",
    "chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)",
-   "feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)",
-   "feat(admin): aba Tarefas agendadas passa a ver todos os 30 jobs do banco (#3422)"
+   "feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -7,7 +7,7 @@
    "Markdown (3989)",
    "SQL (3080)",
    "JSON (1939)",
-   "JavaScript (524)",
+   "JavaScript (526)",
    "Shell (256)",
    "Python (125)",
    "YAML (43)"
@@ -1862,7 +1862,7 @@
    },
    {
     "host": "proj.supabase.co",
-    "arquivos": 24
+    "arquivos": 25
    },
    {
     "host": "zapp-web-v2.vercel.app",

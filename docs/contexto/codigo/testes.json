@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2872,
+ "total": 2874,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2575
+  "unit": 2577
  },
  "onde_ficam": [
   {
@@ -20,11 +20,11 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 260
+   "arquivos": 261
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 203
+   "arquivos": 204
   },
   {
    "padrao": "tests/",
@@ -2606,6 +2606,13 @@
    "casos": 14
   },
   {
+   "arquivo": "scripts/db-audit/talkx-kit-usage.test.mjs",
+   "tipo": "unit",
+   "linhas": 62,
+   "testa": [],
+   "casos": 2
+  },
+  {
    "arquivo": "scripts/db-audit/talkx-navigation-contract.test.mjs",
    "tipo": "contrato",
    "linhas": 20,
@@ -2877,6 +2884,13 @@
     "scripts/graphify-local.mjs"
    ],
    "casos": 24
+  },
+  {
+   "arquivo": "scripts/inventario/gerar-repo.unit.mjs",
+   "tipo": "unit",
+   "linhas": 67,
+   "testa": [],
+   "casos": 2
   },
   {
    "arquivo": "scripts/lib/seguranca-processo.unit.mjs",

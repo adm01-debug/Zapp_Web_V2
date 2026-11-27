@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b40c422be173c98eaeaf6518e2eb69d3f28f7ca2",
+  "sha": "5618ef5716b9fda0ca8d7d5afd6aa37b668727a6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-27 02:19 UTC",
-  "files_total": 14775,
-  "code_files": 8304,
-  "code_lines": 1251813
+  "generated_at": "2026-11-27 17:30 UTC",
+  "files_total": 14777,
+  "code_files": 8306,
+  "code_lines": 1251942
  },
  "version": "1.3.2",
- "facts_hash": "623a4f4e8ca558a7",
+ "facts_hash": "69bcbfade6678595",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -370,7 +370,7 @@
    ".sql": 3080,
    ".tsx": 2534,
    ".ts": 2067,
-   ".mjs": 496,
+   ".mjs": 498,
    ".py": 125,
    ".cjs": 19,
    ".js": 9,
@@ -73349,6 +73349,11 @@
    },
    {
     "kind": "cron (código)",
+    "detail": "vault-edge-1min * * * * *",
+    "file": "scripts/inventario/gerar-repo.unit.mjs"
+   },
+   {
+    "kind": "cron (código)",
     "detail": "daily_orders 0 0 * * *",
     "file": "scripts/regras_negocio/test_generate.py"
    },
@@ -76590,8 +76595,8 @@
   },
   {
    "module": "scripts",
-   "files": 506,
-   "lines": 106907,
+   "files": 508,
+   "lines": 107036,
    "tables": [
     "a",
     "alem_do_limite",
@@ -143497,6 +143502,10 @@
    {
     "file": "scripts/db-audit/talkx-engine-window-contract.test.mjs",
     "name": "C1: rollback restaura corpo, GRANTs e comentario; reaplicar e idempotente"
+   },
+   {
+    "file": "scripts/db-audit/talkx-kit-usage.test.mjs",
+    "name": "${entry.name}: sem AlertDialog/Dialog/window.confirm fora do kit"
    },
    {
     "file": "scripts/db-audit/talkx-navigation-contract.test.mjs",
@@ -304525,6 +304534,15 @@
    ],
    "uses_service_role": true
   },
+  "scripts/db-audit/talkx-kit-usage.test.mjs": {
+   "path": "scripts/db-audit/talkx-kit-usage.test.mjs",
+   "lines": 62,
+   "is_test": true,
+   "doc": "!/usr/bin/env node",
+   "tests": [
+    "${entry.name}: sem AlertDialog/Dialog/window.confirm fora do kit"
+   ]
+  },
   "scripts/db-audit/talkx-navigation-contract.test.mjs": {
    "path": "scripts/db-audit/talkx-navigation-contract.test.mjs",
    "lines": 20,
@@ -306858,6 +306876,14 @@
    "doc": "!/usr/bin/env node Inventario gerado do lado do repositorio (sem acesso ao banco): - edge functions: linhas, segredos lidos (Deno.env.get) e quem as invoca (src, migrations, outras edges, e2e, CI) - tabelas: para cada nome recebido em stdin (uma por linha), quantos .from('tabela') ha em src/ e supab …",
    "side_effects": [
     "invoke("
+   ]
+  },
+  "scripts/inventario/gerar-repo.unit.mjs": {
+   "path": "scripts/inventario/gerar-repo.unit.mjs",
+   "lines": 67,
+   "doc": "Teste do inventário de edge functions (scripts/inventario/gerar-repo.mjs). Cobre especificamente a detecção de chamador via Vault/pg_cron em migrations, onde a URL da edge nunca aparece como texto literal `functions/v1/<nome>` — só o nome da edge solto (nome do secret no Vault, nome do cron job, com …",
+   "cron": [
+    "vault-edge-1min * * * * *"
    ]
   },
   "scripts/inventario/gerar-rotas.mjs": {
@@ -432076,10 +432102,24 @@
   }
  },
  "git": {
-  "sha": "b40c422be173c98eaeaf6518e2eb69d3f28f7ca2",
+  "sha": "5618ef5716b9fda0ca8d7d5afd6aa37b668727a6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5618ef57",
+    "date": "2026-11-27",
+    "author": "adm01-debug",
+    "subject": "test: recupera guardas TalkX X051 e inventario de repo (#3432)",
+    "files": [
+     ".github/workflows/automation-local.yml",
+     ".github/workflows/ci.yml",
+     "TESTING_CONVENTION.md",
+     "scripts/automation.config.json",
+     "scripts/db-audit/talkx-kit-usage.test.mjs",
+     "scripts/inventario/gerar-repo.unit.mjs"
+    ]
+   },
    {
     "sha": "b40c422b",
     "date": "2026-11-26",
@@ -432524,22 +432564,6 @@
      "supabase/functions/evolution-api/index.ts",
      "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
     ]
-   },
-   {
-    "sha": "501f3bb5",
-    "date": "2026-11-26",
-    "author": "adm01-debug",
-    "subject": "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)",
-    "files": [
-     ".github/workflows/db-guard.yml",
-     "ESTADO.md",
-     "scripts/automation.config.json",
-     "scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh",
-     "src/hooks/integrations/__tests__/useTalkXTemplates.test.ts",
-     "src/hooks/integrations/useTalkXTemplates.ts",
-     "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
-     "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -432553,7 +432577,7 @@
    ],
    [
     "ESTADO.md",
-    5
+    4
    ],
    [
     "supabase/schema-catalog.json",
@@ -432566,6 +432590,10 @@
    [
     "inventario/estado/rotas.json",
     4
+   ],
+   [
+    "scripts/automation.config.json",
+    3
    ],
    [
     "scripts/db-audit/grants-baseline.json",
@@ -432592,23 +432620,7 @@
     3
    ],
    [
-    ".github/workflows/db-guard.yml",
-    3
-   ],
-   [
-    "scripts/automation.config.json",
-    3
-   ],
-   [
     "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx",
-    2
-   ],
-   [
-    "src/hooks/integrations/__tests__/useTalkXTemplates.test.ts",
-    2
-   ],
-   [
-    "src/hooks/integrations/useTalkXTemplates.ts",
     2
    ],
    [
@@ -432616,11 +432628,23 @@
     2
    ],
    [
+    ".github/workflows/db-guard.yml",
+    2
+   ],
+   [
     "supabase/deployment-manifest.json",
     2
    ],
    [
-    "scripts/db-audit/check-migration-drift.mjs",
+    ".github/workflows/automation-local.yml",
+    1
+   ],
+   [
+    ".github/workflows/ci.yml",
+    1
+   ],
+   [
+    "TESTING_CONVENTION.md",
     1
    ]
   ]

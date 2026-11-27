@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b40c422be173c98eaeaf6518e2eb69d3f28f7ca2` (2026-11-26T22:46:05-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5618ef5716b9fda0ca8d7d5afd6aa37b668727a6` (2026-11-27T14:28:25-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4606), Markdown (3989), SQL (3080), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
+- linguagens: TypeScript (4606), Markdown (3989), SQL (3080), JSON (1939), JavaScript (526), Shell (256), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14928 |
-| arquivos_codigo | 5251 |
-| linhas_codigo | 972911 |
+| arquivos_total | 14930 |
+| arquivos_codigo | 5253 |
+| linhas_codigo | 973040 |
 | rotas | 21 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 56 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 224 |
 | migrations | 1169 |
 | cron_jobs | 29 |
-| testes | 2872 |
+| testes | 2874 |
 | workflows | 26 |
 | scripts | 458 |
 | docs_md | 3989 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (919), src/pages (31), src/features (2)
 - hooks: src/hooks (452), src/components (75), src/contexts (2)
 - servicos_logica: src/lib (157), src/services (21), src/utils (8)
-- testes: co-localizado (__tests__) (2144), outro (260), co-localizado (*.test) (203)
+- testes: co-localizado (__tests__) (2144), outro (261), co-localizado (*.test) (204)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (309), scripts/ci (43), scripts/e2e-isolated (41)
@@ -404,8 +404,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 97055 nós · 163030 arestas · 8939 comunidades · grafo do commit `b40c422b`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5376), TalkXSuppression.tsx (1233), react (895), vitest (857), card.tsx (766), lucide-react (752), ref_node_assert (590), schemas.ts (498), ref_https (498), validation.ts (492), cn (491), DashboardView.tsx (486)
+- 97063 nós · 163047 arestas · 9035 comunidades · grafo do commit `5618ef57`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5376), TalkXSuppression.tsx (1614), lucide-react (1430), react (1152), cn (1052), vitest (851), validation.ts (724), ref_node_fs (696), DashboardView.tsx (596), chat.ts (565), @tanstack/react-query (565), ref_https (535)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), .from() (supabase/functions/_shared/evolution-types.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -419,7 +419,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - src/integrations/supabase/types.ts (17)
 - .github/workflows/db-guard.yml (14)
 - scripts/db-audit/grants-baseline.json (13)
-- .github/workflows/ci.yml (10)
+- .github/workflows/ci.yml (11)
 - docs/agentes/github-ci.md (10)
 - docs/ci/README.md (9)
 - supabase/functions/evolution-api/index.ts (9)
@@ -547,6 +547,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-27 `5618ef57` test: recupera guardas TalkX X051 e inventario de repo (#3432)
 - 2026-11-26 `b40c422b` fix(ci): separa falha de infraestrutura do aviso de apply pendente no guard de migrations (#3430)
 - 2026-11-27 `b7a8641b` feat(journey): recupera o hook da timeline do historico (J08) (#3429)
 - 2026-11-27 `f9097fe7` chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)
@@ -561,7 +562,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-26 `12371410` fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)
 - 2026-11-26 `31dd9f0f` chore(db): sincronizar artefatos derivados do banco (#3421)
 - 2026-11-26 `d91ac94f` fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)
-- 2026-11-26 `4e81b2b1` feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
