@@ -53,6 +53,7 @@ const JOB = {
   last_status: 'succeeded',
   last_run_at: '2026-10-15T12:00:00.000Z',
   last_return_message: 'sincronizacao concluida',
+  permitido: true,
 };
 
 describe('AdminView — aba "Tarefas agendadas" é só de admin', () => {
